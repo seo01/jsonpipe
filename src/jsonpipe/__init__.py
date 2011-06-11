@@ -9,7 +9,7 @@ from pipe import jsonpipe, jsonunpipe
 
 
 __all__ = ['jsonpipe', 'jsonunpipe']
-__version__ = '0.0.6'
+__version__ = '0.0.6-1'
 
 
 def _get_tests():
@@ -58,16 +58,24 @@ PARSER.add_argument('-s', '--separator', metavar='SEP', default='/',
                     help="Set a custom path component separator (default: /)")
 PARSER.add_argument('-v', '--version', action='version',
                     version='%%(prog)s v%s' % (__version__,))
-
+PARSER.add_argument('-m', '--multi', action='store_true', default=False,
+                    help="Pare multiple lines, one json object per line")
 
 def main():
     args = PARSER.parse_args()
 
-    # Load JSON from stdin, preserving the order of object keys.
-    json_obj = simplejson.load(sys.stdin,
-                               object_pairs_hook=simplejson.OrderedDict)
-    for line in jsonpipe(json_obj, pathsep=args.separator):
-        print line
+    if args.multi:
+        for line in sys.stdin:
+            json_obj = simplejson.loads(line,
+                                    object_pairs_hook=simplejson.OrderedDict)
+            for json_line in jsonpipe(json_obj, pathsep=args.separator):
+                print json_line
+    else:
+        # Load JSON from stdin, preserving the order of object keys.
+        json_obj = simplejson.load(sys.stdin,
+                                object_pairs_hook=simplejson.OrderedDict)
+        for line in jsonpipe(json_obj, pathsep=args.separator):
+            print line
 
 
 def main_unpipe():
